@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { settingsRouter } from "./routes/settings.js";
 import { projectsRouter } from "./routes/projects.js";
+import { pagesRouter } from './routes/pages.js';
 
 const app = express();
 const port = 3001;
@@ -20,6 +21,7 @@ app.use(express.json());
 // Register routes
 app.use("/api/settings", settingsRouter);
 app.use("/api/projects", projectsRouter);
+app.use('/api/pages', pagesRouter);
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

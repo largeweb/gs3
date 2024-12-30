@@ -16,6 +16,9 @@ export default function ChatInput() {
         return "🛠️ Need help configuring? Ask about API keys, project paths, or best practices";
       default:
         if (pathname?.startsWith('/projects/')) {
+          if (pathname.includes('/pages')) {
+            return "🎨 Make frontend page changes - I'll analyze the impact across your project and suggest compatible solutions";
+          }
           return "💡 Describe your change request - I'll analyze it against the Project Tracker and suggest compatible solutions";
         }
         return "How can I assist you today?";

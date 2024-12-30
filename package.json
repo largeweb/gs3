@@ -6,25 +6,27 @@
     "scripts": {
         "dev": "concurrently \"npm run dev:edge\" \"npm run dev:node\"",
         "dev:edge": "next dev --turbopack",
-        "dev:node": "nodemon server.js",
+        "dev:node": "nodemon --ignore 'projects/*' --ignore 'templates/*' server.js",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
         "pages:build": "npx @cloudflare/next-on-pages",
         "preview:edge": "npm run pages:build && wrangler pages dev",
-        "preview:node": "node server.js",
+        "preview:node": "nodemon --ignore 'projects/*' --ignore 'templates/*' server.js",
         "preview": "concurrently \"npm run preview:edge\" \"npm run preview:node\"",
         "deploy": "npm run pages:build && wrangler pages deploy",
         "cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts"
     },
     "dependencies": {
+        "@types/react-syntax-highlighter": "^15.5.13",
         "cors": "^2.8.5",
         "express": "^4.21.2",
         "framer-motion": "^11.15.0",
         "next": "15.1.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
-        "react-hot-toast": "^2.4.1"
+        "react-hot-toast": "^2.4.1",
+        "react-syntax-highlighter": "^15.6.1"
     },
     "devDependencies": {
         "@cloudflare/next-on-pages": "^1.13.7",

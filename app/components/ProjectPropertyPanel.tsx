@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 
 interface StructCard {
   id: string;
@@ -13,6 +14,9 @@ interface StructCard {
 
 export default function ProjectPropertyPanel() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const router = useRouter();
+  const params = useParams();
+  const projectName = params.name as string;
 
   const structCards: StructCard[] = [
     {
@@ -108,11 +112,20 @@ export default function ProjectPropertyPanel() {
     },
   ];
 
+  const handleCardClick = (cardId: string) => {
+    setSelectedCard(cardId === selectedCard ? null : cardId);
+    if (cardId === 'pages') {
+      router.push(`/projects/${projectName}/pages`);
+    } else {
+      router.push(`/projects/${projectName}/${cardId}`);
+    }
+  };
+
   return (
     <motion.div
       initial={{ x: 300 }}
       animate={{ x: 0 }}
-      className="w-96 border-l border-[var(--border-dim)] bg-[var(--bg-secondary)] overflow-y-auto h-full"
+      className="w-[32rem] border-l border-[var(--border-dim)] bg-[var(--bg-secondary)] overflow-y-auto h-full"
     >
       <div className="p-6 space-y-4">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Project Structure</h2>
@@ -123,7 +136,7 @@ export default function ProjectPropertyPanel() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`p-4 rounded-lg border cursor-pointer ${card.color}`}
-            onClick={() => setSelectedCard(card.id === selectedCard ? null : card.id)}
+            onClick={() => handleCardClick(card.id)}
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{card.icon}</span>

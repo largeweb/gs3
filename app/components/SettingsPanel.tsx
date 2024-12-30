@@ -80,6 +80,9 @@ export default function SettingsPanel() {
       const updatedSettings = await response.json() as Settings;
       setSettings(updatedSettings);
       toast.success('Settings updated successfully');
+
+      // Reload the page after successful update
+      window.location.reload();
     } catch (error) {
       console.error('Failed to update settings:', error);
       toast.error('Failed to update settings');

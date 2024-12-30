@@ -35,16 +35,15 @@ export default function Sidebar() {
     <motion.nav
       initial={{ x: -300 }}
       animate={{ x: 0 }}
-      className="w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-dim)] p-4"
+      className="w-[24rem] bg-[var(--bg-secondary)] border-r border-[var(--border-dim)] p-4"
     >
       <div className="space-y-4">
         <Link
           href="/settings"
-          className={`block p-3 rounded-lg transition-colors ${
-            pathname === '/settings'
-              ? 'bg-[var(--accent-primary)] text-white'
-              : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-          }`}
+          className={`block p-3 rounded-lg transition-colors ${pathname === '/settings'
+            ? 'bg-[var(--accent-primary)] text-white'
+            : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
+            }`}
         >
           Settings
         </Link>
@@ -53,11 +52,10 @@ export default function Sidebar() {
           <div className="flex items-center">
             <Link
               href="/projects"
-              className={`flex-grow p-3 rounded-lg transition-colors ${
-                pathname === '/projects'
-                  ? 'bg-[var(--accent-primary)] text-white'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-              }`}
+              className={`flex-grow p-3 rounded-lg transition-colors ${pathname === '/projects'
+                ? 'bg-[var(--accent-primary)] text-white'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
+                }`}
             >
               Projects
             </Link>
@@ -94,11 +92,10 @@ export default function Sidebar() {
                       >
                         <Link
                           href={`/projects/${project.name}`}
-                          className={`block p-3 rounded-lg transition-colors ${
-                            pathname === `/projects/${project.name}`
-                              ? 'bg-[var(--accent-secondary)] text-white'
-                              : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                          }`}
+                          className={`block p-3 rounded-lg transition-colors ${pathname === `/projects/${project.name}`
+                            ? 'bg-[var(--accent-secondary)] text-white'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
+                            }`}
                         >
                           {project.name}
                         </Link>

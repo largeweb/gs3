@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { getApiBaseUrl } from '../lib/config';
+import ProjectCreator from './ProjectCreator';
 
 interface Project {
   name: string;
@@ -15,6 +16,7 @@ export default function ProjectsList() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreator, setShowCreator] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,36 +51,42 @@ export default function ProjectsList() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Projects</h1>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="px-4 py-2 rounded-lg bg-[var(--accent-primary)] text-white"
-        >
-          Create New Project
-        </motion.button>
-      </div>
-
-      <div className="space-y-4">
-        {projects.map(project => (
-          project.hasSettings && (
-            <motion.div
-              key={project.path}
+      {!showCreator ? (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Projects</h1>
+            <motion.button
               whileHover={{ scale: 1.02 }}
-              className="p-4 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-dim)] cursor-pointer"
-              onClick={() => router.push(`/projects/${project.name}`)}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowCreator(true)}
+              className="px-4 py-2 rounded-lg bg-[var(--accent-primary)] text-white"
             >
-              <h3 className="text-lg font-medium text-[var(--text-primary)]">
-                {project.name}
-              </h3>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">
-                {project.path}
-              </p>
-            </motion.div>
-          )
-        ))}
-      </div>
+              Create New Project
+            </motion.button>
+          </div>
+          <div className="space-y-4">
+            {projects.map(project => (
+              project.hasSettings && (
+                <motion.div
+                  key={project.path}
+                  whileHover={{ scale: 1.02 }}
+                  className="p-4 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-dim)] cursor-pointer"
+                  onClick={() => router.push(`/projects/${project.name}`)}
+                >
+                  <h3 className="text-lg font-medium text-[var(--text-primary)]">
+                    {project.name}
+                  </h3>
+                  <p className="text-sm text-[var(--text-secondary)] mt-1">
+                    {project.path}
+                  </p>
+                </motion.div>
+              )
+            ))}
+          </div>
+        </>
+      ) : (
+        <ProjectCreator onBack={() => setShowCreator(false)} />
+      )}
     </div>
   );
 }

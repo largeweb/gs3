@@ -2,8 +2,17 @@ import { Router } from "express";
 import { promises as fs } from "fs";
 import * as path from "path";
 import { readSettings } from "./settings.js"; // We'll need to export readSettings from settings.js
+import { exec } from "child_process";
+import { promisify } from "util";
 
+const execAsync = promisify(exec);
 const router = Router();
+
+// Add a base log to debug route matching
+router.use((req, res, next) => {
+    console.log(`🎯 Incoming ${req.method} request to: ${req.path}`);
+    next();
+});
 
 router.get("/", async (req, res) => {
     console.log(
@@ -71,6 +80,43 @@ router.get("/", async (req, res) => {
     } catch (error) {
         console.error("💥 Oops! The project explorer tripped:", error);
         res.status(500).json({ error: "Failed to read projects" });
+    }
+});
+
+router.post("/create", async (req, res) => {
+    console.log("🎨 Creating new project...");
+    try {
+        const { title, softwareType } = req.body;
+        const settings = await readSettings();
+
+        const projectsPath = settings.projectsPath || path.join(process.cwd(), "projects");
+        const templatePath = path.join(process.cwd(), "templates", "next-cloudflare");
+        const newProjectPath = path.join(projectsPath, title);
+
+        console.log(`📁 Creating project directory: ${newProjectPath}`);
+        await fs.mkdir(newProjectPath, { recursive: true });
+
+        console.log("📋 Copying template files...");
+        await execAsync(`cp -r ${templatePath}/* ${newProjectPath}`);
+
+        console.log("📦 Installing dependencies...");
+        const { stdout, stderr } = await execAsync('npm install', { cwd: newProjectPath });
+
+        console.log("✨ Project created successfully!");
+        res.json({
+            success: true,
+            path: newProjectPath,
+            logs: {
+                stdout,
+                stderr
+            }
+        });
+    } catch (error) {
+        console.error("💥 Project creation failed:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 });
 

@@ -1,0 +1,8 @@
+{
+  "projectsPath": "projects",
+  "anthropicApiKey": "test",
+  "geminiApiKey": "test",
+  "openaiApiKey": "test",
+  "userOS": "test",
+  "os": "darwin"
+}

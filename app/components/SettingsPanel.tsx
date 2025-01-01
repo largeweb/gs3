@@ -6,26 +6,16 @@ import toast from 'react-hot-toast';
 import { getApiBaseUrl } from '../lib/config';
 
 interface Settings {
-  projectsPath: string;
+  projectPath: string;
   anthropicApiKey: string;
   geminiApiKey: string;
   openaiApiKey: string;
   userOS: string;
 }
 
-// Extend the global Window interface
-declare global {
-  interface Window {
-    showDirectoryPicker(): Promise<{
-      name: string;
-      kind: 'directory';
-    }>;
-  }
-}
-
 export default function SettingsPanel() {
   const [settings, setSettings] = useState<Settings>({
-    projectsPath: '',
+    projectPath: '',
     anthropicApiKey: '',
     geminiApiKey: '',
     openaiApiKey: '',
@@ -89,16 +79,6 @@ export default function SettingsPanel() {
     }
   };
 
-  const handleBrowse = async () => {
-    try {
-      const dirHandle = await window.showDirectoryPicker();
-      const path = dirHandle.name;
-      setSettings(prev => ({ ...prev, projectsPath: path }));
-    } catch (error) {
-      console.error('Failed to browse:', error);
-    }
-  };
-
   if (isLoading) return <div>Loading...</div>;
 
   return (
@@ -111,25 +91,13 @@ export default function SettingsPanel() {
             <label className="block text-sm font-medium mb-1 text-[var(--text-secondary)]">
               {key.charAt(0).toUpperCase() + key.slice(1)}
             </label>
-            <div className="flex gap-2">
-              <input
-                type={key.includes('ApiKey') ? 'password' : 'text'}
-                value={value}
-                onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
-                disabled={key === 'userOS'}
-                className="flex-1 p-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-dim)] text-[var(--text-primary)]"
-              />
-              {key === 'projectsPath' && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleBrowse}
-                  className="px-3 py-2 rounded-lg bg-[var(--accent-secondary)] text-white"
-                >
-                  Browse
-                </motion.button>
-              )}
-            </div>
+            <input
+              type={key.includes('ApiKey') ? 'password' : 'text'}
+              value={value}
+              onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
+              disabled={key === 'userOS'}
+              className="w-full p-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-dim)] text-[var(--text-primary)]"
+            />
           </div>
         ))}
 

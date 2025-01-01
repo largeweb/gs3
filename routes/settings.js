@@ -31,17 +31,21 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
+    console.log("⚙️ Time to update the settings! What could go wrong?");
     try {
+        console.log("📡 Fetching current settings from the time capsule...");
         const currentSettings = await readSettings();
+        console.log("🔄 Mixing old and new settings like a DJ!");
         const newSettings = {
             ...currentSettings,
             ...req.body,
-            os: os.platform(), // Ensure OS is always current
+            os: os.platform(),
         };
-
+        console.log("💾 Saving settings to the digital vault...");
         await fs.writeFile(SETTINGS_FILE, JSON.stringify(newSettings, null, 2));
         res.json(newSettings);
     } catch (error) {
+        console.error("🎭 Plot twist: Settings update failed!", error);
         res.status(500).json({ error: "Failed to update settings" });
     }
 });

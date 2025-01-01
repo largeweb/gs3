@@ -6,6 +6,7 @@ import SettingsPanel from './SettingsPanel';
 import ProjectsList from './ProjectsList';
 import ProjectPropertyPanel from './ProjectPropertyPanel';
 import PagesList from './PagesList';
+import TestingDeploymentPanel from './TestingDeploymentPanel';
 
 export default function PropertyPanel() {
   const pathname = usePathname();
@@ -19,7 +20,11 @@ export default function PropertyPanel() {
       {pathname === '/settings' && <SettingsPanel />}
       {pathname === '/projects' && <ProjectsList />}
       {pathname?.includes('/pages') && <PagesList />}
-      {pathname?.startsWith('/projects/') && !pathname?.includes('/pages') && <ProjectPropertyPanel />}
+      {pathname?.includes('/testing-deployment') && <TestingDeploymentPanel onBack={() => { }} />}
+      {pathname?.startsWith('/projects/') &&
+        !pathname?.includes('/pages') &&
+        !pathname?.includes('/testing-deployment') &&
+        <ProjectPropertyPanel />}
     </motion.div>
   );
 }

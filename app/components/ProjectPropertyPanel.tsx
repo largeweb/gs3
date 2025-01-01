@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import TestingDeploymentPanel from './TestingDeploymentPanel';
 
 interface StructCard {
   id: string;
@@ -19,6 +20,13 @@ export default function ProjectPropertyPanel() {
   const projectName = params.name as string;
 
   const structCards: StructCard[] = [
+    {
+      id: 'testing-deployment',
+      title: 'Testing & Deployment',
+      description: `Launch development server, run tests, and manage deployments with live terminal output.`,
+      icon: '🚀',
+      color: 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20',
+    },
     {
       id: 'overview',
       title: 'Project Blueprint',
@@ -116,10 +124,13 @@ export default function ProjectPropertyPanel() {
     setSelectedCard(cardId === selectedCard ? null : cardId);
     if (cardId === 'pages') {
       router.push(`/projects/${projectName}/pages`);
-    } else {
-      router.push(`/projects/${projectName}/${cardId}`);
     }
   };
+
+  // If testing-deployment is selected, show that panel
+  if (selectedCard === 'testing-deployment') {
+    return <TestingDeploymentPanel onBack={() => setSelectedCard(null)} />;
+  }
 
   return (
     <motion.div

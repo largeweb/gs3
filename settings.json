@@ -1,8 +1,7 @@
 {
-  "projectsPath": "projects",
-  "anthropicApiKey": "testsdf",
-  "geminiApiKey": "test",
-  "openaiApiKey": "test",
-  "userOS": "test",
+  "projectsPath": "/home/matt/projects/gs3/projects",
+  "anthropicApiKey": "",
+  "geminiApiKey": "",
+  "openaiApiKey": "",
   "os": "linux"
 }

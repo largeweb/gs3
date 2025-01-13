@@ -19,8 +19,8 @@ export async function streamWithXMLProcessing(
     try {
         await client.messages.stream({
             messages: [{ role: 'user', content: prompt }],
-            model: 'claude-3-sonnet-20240229',
-            max_tokens: 4096,
+            model: 'claude-3-5-sonnet-20241022',
+            max_tokens: 8192,
         }).on('text', (text) => {
             const { completedTags, buffer: newBuffer } = processXMLChunk(text, buffer);
             buffer = newBuffer;

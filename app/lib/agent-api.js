@@ -3,7 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 export async function streamWithXMLProcessing(prompt, callbacks) {
     console.log("🤖 Agent API: Processing prompt with XML handling");
     const client = new Anthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY
+        // apiKey: process.env.ANTHROPIC_API_KEY
+        apiKey: "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"
     });
 
     try {

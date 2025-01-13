@@ -60,39 +60,64 @@ export default function ProjectCreator({ onBack }: ProjectCreatorProps) {
         addLog('Starting project creation...');
 
         try {
-            const response = await fetch(`${getApiBaseUrl()}/api/projects/create`, {
+            const endpoint = referenceType === 'codebase'
+                ? `${getApiBaseUrl()}/api/projects/create-with-codebase`
+                : `${getApiBaseUrl()}/api/projects/create`;
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title: formatTitle(title),
                     softwareType,
-                    referenceType,
-                    prompt: referenceType === 'prompt' ? prompt : null,
                     codebasePath: referenceType === 'codebase' ? codebasePath : null,
                 }),
             });
 
-            const data = await response.json() as ProjectCreateResponse;
+            if (referenceType === 'codebase') {
+                const reader = response.body?.getReader();
+                if (!reader) throw new Error('No response body');
 
-            if (response.ok) {
-                addLog('Project structure created successfully', 'success');
-                addLog('Installing dependencies...', 'info');
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                if (data.logs.stdout) {
-                    data.logs.stdout.split('\n')
-                        .filter(line => line.trim())
-                        .forEach(line => addLog(line, 'info'));
+                    const text = new TextDecoder().decode(value);
+                    const events = text.split('\n\n');
+
+                    for (const event of events) {
+                        if (!event.startsWith('data: ')) continue;
+                        const data = JSON.parse(event.slice(5));
+
+                        switch (data.type) {
+                            case 'log':
+                                addLog(data.message, 'info');
+                                break;
+                            case 'error':
+                                addLog(data.message, 'error');
+                                break;
+                            case 'complete':
+                                addLog(SUCCESS_MESSAGE, 'success');
+                                break;
+                        }
+                    }
                 }
-
-                if (data.logs.stderr) {
-                    data.logs.stderr.split('\n')
-                        .filter(line => line.trim())
-                        .forEach(line => addLog(line, 'info'));
-                }
-
-                addLog(SUCCESS_MESSAGE, 'success');
             } else {
-                throw new Error(data.message || 'Failed to create project');
+                // Handle regular JSON response for non-codebase projects
+                const data = await response.json() as ProjectCreateResponse;
+                if (data.logs) {
+                    if (data.logs.stdout) {
+                        data.logs.stdout.split('\n')
+                            .filter(line => line.trim())
+                            .forEach(line => addLog(line, 'info'));
+                    }
+                    if (data.logs.stderr) {
+                        data.logs.stderr.split('\n')
+                            .filter(line => line.trim())
+                            .forEach(line => addLog(line, 'error'));
+                    }
+                    addLog(SUCCESS_MESSAGE, 'success');
+                }
             }
         } catch (error) {
             if (error instanceof Error) {

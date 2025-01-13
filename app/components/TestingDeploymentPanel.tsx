@@ -40,6 +40,11 @@ export default function TestingDeploymentPanel({ onBack }: TestingDeploymentPane
                 })
             });
 
+            if (!response.ok) {
+                const error = await response.json() as { error: string };
+                throw new Error(error.error || 'Failed to start server');
+            }
+
             const reader = response.body?.getReader();
             if (!reader) return;
 

@@ -57,4 +57,85 @@ router.get("/:projectName/content", async (req, res) => {
   }
 });
 
+// Create a new page
+router.post("/:projectName", async (req, res) => {
+  try {
+    const { projectName } = req.params;
+    const { pageName, content } = req.body;
+
+    const projectPath = path.join(process.cwd(), "projects", projectName);
+    const pagePath = path.join(projectPath, "app", pageName, "page.tsx");
+
+    // Create directory if it doesn't exist
+    await fs.mkdir(path.dirname(pagePath), { recursive: true });
+
+    // Create default page content if none provided
+    const pageContent = content || `export default function ${pageName.replace(/[^a-zA-Z0-9]/g, '')}Page() {
+  return (
+    <div>
+      <h1>${pageName} Page</h1>
+    </div>
+  );
+}`;
+
+    await fs.writeFile(pagePath, pageContent, 'utf-8');
+    res.json({ success: true, path: pagePath });
+  } catch (error) {
+    console.error("Failed to create page:", error);
+    res.status(500).json({ error: "Failed to create page" });
+  }
+});
+
+// Update existing page
+router.put("/:projectName", async (req, res) => {
+  try {
+    const { projectName } = req.params;
+    const { pagePath, content } = req.body;
+
+    const fullPath = path.join(process.cwd(), "projects", projectName, pagePath);
+    await fs.writeFile(fullPath, content, 'utf-8');
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Failed to update page:", error);
+    res.status(500).json({ error: "Failed to update page" });
+  }
+});
+
+// Delete page
+router.delete("/:projectName", async (req, res) => {
+  try {
+    const { projectName } = req.params;
+    const { pagePath } = req.body;
+
+    // Sanitize the path similar to page creation
+    const sanitizedPath = pagePath
+      .toLowerCase()
+      .replace(/[^a-z0-9\/]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    const projectPath = path.join(process.cwd(), "projects", projectName);
+    const fullPath = path.join(projectPath, sanitizedPath);
+    const pageDir = path.dirname(fullPath);
+
+    console.log("🗑️ Deleting page directory:", pageDir);
+
+    // First, ensure the directory exists
+    try {
+      await fs.access(pageDir);
+    } catch {
+      throw new Error("Page directory not found");
+    }
+
+    // Delete the directory and all its contents recursively
+    await fs.rm(pageDir, { recursive: true, force: true });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete page:", error);
+    res.status(500).json({ error: error.message || "Failed to delete page" });
+  }
+});
+
 export { router as pagesRouter };

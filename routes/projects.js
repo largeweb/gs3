@@ -6,34 +6,61 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { streamWithXMLProcessing } from '../app/lib/agent-api.js';
 import { spawn } from 'child_process';
+import { codebaseTools, systemPrompt, userPrePrompt, userPostPrompt } from '../agents/codebase-analyzer.js';
 
 const execAsync = promisify(exec);
 const router = Router();
+
+// Add CORS headers
+router.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 
 const activeProcesses = new Map();
 
 class ProcessManager {
     static addProcess(projectId, process) {
-        activeProcesses.set(projectId, process);
+        console.log(`📝 Adding process ${process.pid} for project ${projectId}`);
+        activeProcesses.set(projectId, {
+            pid: process.pid,
+            process: process
+        });
     }
 
     static removeProcess(projectId) {
-        const process = activeProcesses.get(projectId);
-        if (process) {
-            process.kill();
+        const processInfo = activeProcesses.get(projectId);
+        if (processInfo) {
+            console.log(`🔪 Killing process ${processInfo.pid} for project ${projectId}`);
+            try {
+                // Kill the main process
+                process.kill(processInfo.pid);
+                // Kill any child processes
+                process.kill(-processInfo.pid);
+            } catch (error) {
+                console.error(`💥 Failed to kill process ${processInfo.pid}:`, error);
+            }
             activeProcesses.delete(projectId);
         }
     }
 
     static getProcess(projectId) {
-        return activeProcesses.get(projectId);
+        const processInfo = activeProcesses.get(projectId);
+        return processInfo ? processInfo.process : null;
     }
 
-    static killAll() {
-        for (const process of activeProcesses.values()) {
-            process.kill();
-        }
-        activeProcesses.clear();
+    static listProcesses() {
+        console.log('📊 Active processes:',
+            Array.from(activeProcesses.entries())
+                .map(([id, info]) => `${id}: ${info.pid}`)
+        );
     }
 }
 
@@ -95,28 +122,15 @@ router.get("/", async (req, res) => {
                     );
                     return isDir;
                 })
-                .map(async (dir) => {
-                    const projectPath = path.join(projectsPath, dir.name);
-                    console.log(
-                        `🔎 Checking project: ${dir.name} at ${projectPath}`
-                    );
-                    let hasSettings = false;
-
-                    try {
-                        await fs.access(
-                            path.join(projectPath, "gs3-settings.json")
-                        );
-                        hasSettings = true;
-                        console.log(`✨ Found settings for ${dir.name}`);
-                    } catch {
-                        console.log(`📝 No settings found for ${dir.name}`);
-                    }
-
-                    return { name: dir.name, path: projectPath, hasSettings };
+                .map(async (item) => {
+                    return {
+                        name: item.name,
+                        path: path.join(projectsPath, item.name)
+                    };
                 })
         );
 
-        console.log("🎉 Final projects list:", projects);
+        // console.log("🎉 Final projects list:", projects);
         res.json({ projects });
     } catch (error) {
         console.error("💥 Oops! The project explorer tripped:", error);
@@ -162,43 +176,53 @@ router.post("/create", async (req, res) => {
 });
 
 router.post('/create-with-codebase', async (req, res) => {
-    console.log("🏗️ Time to build something from existing blueprints!");
+    console.log("🏗 Time to explore a codebase!");
     const { title, codebasePath } = req.body;
-    const projectPath = path.join(process.cwd(), 'projects', title);
-    const logsPath = path.join(projectPath, 'gs3-logs.txt');
-
-    console.log(`📂 Blueprint source: ${codebasePath}`);
 
     try {
-        console.log("🎨 Creating your masterpiece...");
-        await fs.mkdir(projectPath, { recursive: true });
-        console.log("📝 Getting ready to take notes...");
-        const writeStream = await fs.open(logsPath, 'a');
+        // Set headers for streaming response
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
 
-        // Import and use the workflow
-        const { analyzeCodebase } = await import('../workflows/codebase-analysis.js');
-        const analysisPrompt = await analyzeCodebase(codebasePath);
+        console.log(`📂 Analyzing codebase at: ${codebasePath}`);
 
-        console.log("🤖 AI analysis in progress, grab a coffee!");
+        // Create project directory and logs file
+        const settings = await readSettings();
+        const projectsPath = settings.projectsPath || path.join(process.cwd(), "projects");
+        const newProjectPath = path.join(projectsPath, title);
+
+        console.log(`📁 Creating project directory: ${newProjectPath}`);
+        await fs.mkdir(newProjectPath, { recursive: true });
+
+        // Get initial file listing
+        const { stdout, stderr } = await execAsync(`ls ${codebasePath}`);
+        const fileList = stdout.split('\n').filter(Boolean).join('\n');
+
+        // Construct the initial prompt
+        const initialPrompt = `${systemPrompt}\n\n${userPrePrompt}\n\n${fileList}\n\n${userPostPrompt}`;
+
+        // Stream the analysis to the client
         await streamWithXMLProcessing(
-            analysisPrompt,
+            initialPrompt,
             {
                 onTag: async (tag) => {
-                    console.log("✍️ Writing wisdom to the logs...");
-                    await writeStream.write(tag + '\n');
+                    res.write(`data: ${JSON.stringify({ type: 'log', message: tag })}\n\n`);
                 },
                 onError: (error) => {
-                    console.error('🌋 AI had a brain freeze:', error);
+                    console.error("💥 Analysis error:", error);
+                    res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
                 }
             }
         );
 
-        console.log("✨ Project creation complete! Time to celebrate!");
-        await writeStream.close();
-        res.json({ success: true });
+        // Send completion message
+        res.write(`data: ${JSON.stringify({ type: 'complete', path: newProjectPath })}\n\n`);
+        res.end();
     } catch (error) {
-        console.error("💥 Oops! The creation spell backfired:", error);
-        res.status(500).json({ error: error.message });
+        console.error("💥 Oops! Analysis failed:", error);
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
     }
 });
 
@@ -244,33 +268,70 @@ router.post('/validate-path', async (req, res) => {
 
 router.post('/server', async (req, res) => {
     const { command, projectId } = req.body;
-    console.log(`🚀 Starting server for project ${projectId} with command: ${command}`);
+    console.log(`🚀 Mission Control: Initiating launch sequence for project ${projectId}`);
+    console.log(`📜 Command received: ${command}`);
 
     try {
         // Check if project already has a running process
         if (ProcessManager.getProcess(projectId)) {
+            console.log('⚠️ Houston, we have a problem: Server already running!');
             return res.status(400).json({
                 error: 'A server is already running for this project'
             });
         }
 
+        // Get project path
+        const settings = await readSettings();
+        const projectsPath = settings.projectsPath || path.join(process.cwd(), "projects");
+        const projectPath = path.join(projectsPath, projectId);
+
+        console.log('📍 Launch pad location:', projectPath);
+
+        // Verify project directory exists
+        try {
+            await fs.access(projectPath);
+            console.log('✅ Launch pad verified and ready');
+        } catch (error) {
+            console.error('💥 Launch pad not found:', error);
+            return res.status(404).json({ error: 'Project directory not found' });
+        }
+
         // Set up response for streaming
+        console.log('📡 Establishing communication channel...');
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Transfer-Encoding', 'chunked');
 
         const [cmd, ...args] = command.split(' ');
-        const child = spawn(cmd, args, {
-            cwd: process.cwd(), // We'll need to update this to the project directory
-            shell: true
-        });
+        console.log('🛠️ Preparing launch command:', { cmd, args, projectPath });
 
-        ProcessManager.addProcess(projectId, child);
+        let child;
+        try {
+            child = spawn(cmd, args, {
+                cwd: projectPath,
+                shell: true,
+                env: { ...process.env, FORCE_COLOR: '1' },
+                detached: true // Create new process group
+            });
+
+            if (!child.pid) {
+                console.error('💥 Failed to spawn process - no PID assigned');
+                throw new Error('Failed to start server process');
+            }
+
+            console.log('🎯 Process spawned successfully with PID:', child.pid);
+            ProcessManager.addProcess(projectId, child);
+        } catch (spawnError) {
+            console.error('💥 Spawn failed:', spawnError);
+            throw new Error(`Failed to start server: ${spawnError.message}`);
+        }
 
         // Stream stdout
         child.stdout.on('data', (data) => {
             const output = data.toString();
-            // Check for port conflict in the output
+            console.log('📤 Server output:', output);
+
             if (output.includes('EADDRINUSE')) {
+                console.log('🚫 Port conflict detected! Abort! Abort!');
                 res.write('Error: Port is already in use. Please ensure no other server is running on this port.\n');
                 ProcessManager.removeProcess(projectId);
                 res.end();
@@ -282,8 +343,10 @@ router.post('/server', async (req, res) => {
         // Stream stderr
         child.stderr.on('data', (data) => {
             const error = data.toString();
-            // Check for port conflict in stderr
+            console.log('⚠️ Server warning/error:', error);
+
             if (error.includes('EADDRINUSE')) {
+                console.log('🚫 Port conflict detected in stderr! Abort! Abort!');
                 res.write('Error: Port is already in use. Please ensure no other server is running on this port.\n');
                 ProcessManager.removeProcess(projectId);
                 res.end();
@@ -294,6 +357,7 @@ router.post('/server', async (req, res) => {
 
         // Handle process completion
         child.on('close', (code) => {
+            console.log(`🏁 Process completed with code ${code}`);
             res.write(`\nProcess exited with code ${code}`);
             ProcessManager.removeProcess(projectId);
             res.end();
@@ -301,11 +365,12 @@ router.post('/server', async (req, res) => {
 
         // Cleanup on request close
         req.on('close', () => {
+            console.log('🧹 Client disconnected, cleaning up...');
             ProcessManager.removeProcess(projectId);
         });
 
     } catch (error) {
-        console.error('Failed to start server:', error);
+        console.error('💥 Mission failed:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -313,13 +378,23 @@ router.post('/server', async (req, res) => {
 // Add cleanup route
 router.delete('/server', (req, res) => {
     const { projectId } = req.body;
-    console.log(`🛑 Stopping server for project ${projectId}...`);
+    console.log(`🛑 Attempting to stop server for project ${projectId}...`);
+
     try {
+        const process = ProcessManager.getProcess(projectId);
+        if (!process) {
+            console.log('⚠️ No running process found for project:', projectId);
+            return res.status(404).json({ error: 'No running server found' });
+        }
+
+        console.log(`🎯 Found process with PID ${process.pid}, stopping...`);
         ProcessManager.removeProcess(projectId);
+        console.log('✅ Server stopped successfully');
+
         res.json({ success: true });
     } catch (error) {
-        console.error('Failed to stop server:', error);
-        res.status(500).json({ error: error.message });
+        console.error('💥 Failed to stop server:', error);
+        res.status(500).json({ error: error.message || 'Failed to stop server' });
     }
 });
 

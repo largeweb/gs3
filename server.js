@@ -11,7 +11,7 @@ const port = 3001;
 app.use(
     cors({
         origin: "http://localhost:3000", // Your Next.js app
-        methods: ["GET", "POST"],
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         credentials: true,
     })
 );

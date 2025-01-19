@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 
-export default function ChatInput() {
+interface ChatInputProps {
+  onSendMessage: (message: string) => Promise<void>;
+}
+
+export default function ChatInput({ onSendMessage }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const pathname = usePathname();
 
@@ -25,10 +29,12 @@ export default function ChatInput() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement chat submission
-    setMessage('');
+    if (message.trim()) {
+      await onSendMessage(message);
+      setMessage('');
+    }
   };
 
   return (

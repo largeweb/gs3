@@ -43,7 +43,7 @@ export default function Home() {
           value={command}
           onChange={(e) => setCommand(e.target.value)}
           placeholder="Enter command (ls, pwd, cd, dir)"
-          className="flex-1 p-2 border rounded"
+          className="flex-1 p-2 border rounded text-black"
         />
         <button
           onClick={executeCommand}

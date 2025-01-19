@@ -21,6 +21,7 @@
         "@types/react-syntax-highlighter": "^15.5.13",
         "cors": "^2.8.5",
         "express": "^4.21.2",
+        "fast-xml-parser": "^4.5.1",
         "framer-motion": "^11.15.0",
         "lucide-react": "^0.469.0",
         "next": "15.1.0",
@@ -30,6 +31,7 @@
         "react-syntax-highlighter": "^15.6.1"
     },
     "devDependencies": {
+        "@anthropic-ai/sdk": "^0.33.1",
         "@cloudflare/next-on-pages": "^1.13.7",
         "@cloudflare/workers-types": "^4.20241224.0",
         "@eslint/eslintrc": "^3",

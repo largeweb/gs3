@@ -1,0 +1,146 @@
+{
+    "overview": {
+        "architecture": {
+            "patterns": [
+                "Next.js 13+ App Router (Frontend - Port 3000)",
+                "Express Backend Server (Backend - Port 3001)",
+                "AI-powered project management",
+                "File system operations via Express",
+                "Cloudflare Pages deployment ready"
+            ],
+            "core_features": [
+                "Project template management",
+                "AI-assisted code analysis",
+                "Change request workflow",
+                "Project structure visualization"
+            ]
+        }
+    },
+    "error_check": {
+        "value": "no",
+        "description": "Architecture properly separates concerns:\n- Next.js handles UI/UX\n- Express manages filesystem\n- AI agents handle analysis\nNo conflicts detected in current implementation."
+    },
+    "components": {
+        "core": [
+            {
+                "path": "app/components/ProjectPropertyPanel.tsx",
+                "purpose": "Right panel component manager",
+                "runtime": "Client Component",
+                "features": [
+                    "Dynamic workspace cards",
+                    "Context-aware panel switching",
+                    "Project structure visualization"
+                ]
+            },
+            {
+                "path": "app/components/ChatInterface.tsx",
+                "purpose": "Main chat interaction area",
+                "runtime": "Client Component",
+                "features": [
+                    "Context-aware prompting",
+                    "Change request generation",
+                    "Todo list visualization"
+                ]
+            }
+        ]
+    },
+    "backend_services": {
+        "express_routes": [
+            {
+                "path": "routes/projects.js",
+                "purpose": "Project management endpoints",
+                "key_features": [
+                    "Project creation",
+                    "Template management",
+                    "Process management",
+                    "CORS handling"
+                ]
+            }
+        ],
+        "workflows": [
+            {
+                "path": "workflows/project-analysis.js",
+                "purpose": "Project analysis and tracking",
+                "key_features": [
+                    "Codebase scanning",
+                    "AI analysis integration",
+                    "Tracker generation"
+                ]
+            }
+        ]
+    },
+    "ai_agents": {
+        "analyzers": [
+            {
+                "path": "agents/codebase-analyzer.js",
+                "purpose": "Codebase analysis tools",
+                "tools": [
+                    "drill_down - Directory exploration",
+                    "read_file - File content analysis"
+                ],
+                "capabilities": [
+                    "Project structure analysis",
+                    "Configuration parsing",
+                    "Architecture mapping"
+                ]
+            }
+        ],
+        "generators": [
+            {
+                "path": "app/lib/agent-api.js",
+                "purpose": "AI interaction management",
+                "features": [
+                    "Structured conversation handling",
+                    "XML response formatting",
+                    "Project analysis capabilities"
+                ]
+            }
+        ]
+    },
+    "workflows": {
+        "project_creation": {
+            "steps": [
+                "Template selection (next-cloudflare)",
+                "Project initialization",
+                "Codebase analysis",
+                "Tracker generation"
+            ],
+            "supported_types": [
+                "next-cloudflare",
+                "nodejs-aws",
+                "nodejs-lambda",
+                "gpu-aws",
+                "gpu-modal"
+            ]
+        },
+        "change_requests": {
+            "steps": [
+                "Context gathering",
+                "AI analysis",
+                "Change proposal",
+                "User refinement",
+                "Implementation"
+            ]
+        }
+    },
+    "recent_history": {
+        "implemented": [
+            "Project navigation structure",
+            "Property panel components",
+            "Basic chat interface",
+            "Project creation workflow"
+        ],
+        "in_progress": [
+            "Change request workflow",
+            "Structured response parsing",
+            "Project tracker generation",
+            "Type safety checks"
+        ],
+        "planned": [
+            "Additional templates",
+            "GPU worker integration",
+            "Enhanced API abstraction",
+            "Multi-project management"
+        ]
+    }
+}

@@ -19,15 +19,15 @@ interface ProjectCreatorProps {
     onBack: () => void;
 }
 
-interface ProjectCreateResponse {
-    success: boolean;
-    path: string;
-    logs: {
-        stdout: string;
-        stderr: string;
-    };
-    message?: string;
-}
+// interface ProjectCreateResponse {
+//     success: boolean;
+//     path: string;
+//     logs: {
+//         stdout: string;
+//         stderr: string;
+//     };
+//     message?: string;
+// }
 
 interface ValidatePathResponse {
     success: boolean;
@@ -57,7 +57,8 @@ export default function ProjectCreator({ onBack }: ProjectCreatorProps) {
 
     const handleCreate = async () => {
         setIsCreating(true);
-        addLog('Starting project creation...');
+        addLog('🚀 Initiating project creation sequence...', 'info');
+        addLog('📋 Preparing project template...', 'info');
 
         try {
             const endpoint = referenceType === 'codebase'
@@ -91,41 +92,22 @@ export default function ProjectCreator({ onBack }: ProjectCreatorProps) {
 
                         switch (data.type) {
                             case 'log':
-                                addLog(data.message, 'info');
+                                addLog(`${new Date().toLocaleTimeString()} - ${data.message}`, 'info');
                                 break;
                             case 'error':
-                                addLog(data.message, 'error');
+                                addLog(`❌ ${data.message}`, 'error');
                                 break;
                             case 'complete':
-                                addLog(SUCCESS_MESSAGE, 'success');
+                                addLog('✨ Project setup complete!', 'success');
+                                addLog('📁 Project files generated', 'success');
+                                addLog('📝 Project tracker created', 'success');
                                 break;
                         }
                     }
                 }
-            } else {
-                // Handle regular JSON response for non-codebase projects
-                const data = await response.json() as ProjectCreateResponse;
-                if (data.logs) {
-                    if (data.logs.stdout) {
-                        data.logs.stdout.split('\n')
-                            .filter(line => line.trim())
-                            .forEach(line => addLog(line, 'info'));
-                    }
-                    if (data.logs.stderr) {
-                        data.logs.stderr.split('\n')
-                            .filter(line => line.trim())
-                            .forEach(line => addLog(line, 'error'));
-                    }
-                    addLog(SUCCESS_MESSAGE, 'success');
-                }
             }
-        } catch (error) {
-            if (error instanceof Error) {
-                addLog(`Error: ${error.message}`, 'error');
-            } else {
-                addLog('An unknown error occurred', 'error');
-            }
-        } finally {
+        } catch (error: any) {
+            addLog(`❌ Error: ${error.message}`, 'error');
             setIsCreating(false);
         }
     };

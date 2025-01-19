@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { getApiBaseUrl } from '../lib/config';
@@ -28,7 +28,7 @@ export default function PagesList() {
     const params = useParams();
     const projectName = params.name as string;
 
-    const fetchPages = async () => {
+    const fetchPages = useCallback(async () => {
         try {
             console.log("📡 Sending signal to project API...");
             const response = await fetch(`${getApiBaseUrl()}/api/pages/${projectName}`);
@@ -46,12 +46,12 @@ export default function PagesList() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [projectName]);
 
     useEffect(() => {
         console.log("🚀 Initiating project discovery sequence...");
         fetchPages();
-    }, [projectName]);
+    }, [fetchPages]);
 
     const fetchPageContent = async (pagePath: string) => {
         try {
@@ -191,6 +191,14 @@ export default function PagesList() {
                     >
                         {pageContent}
                     </SyntaxHighlighter>
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleUpdatePage(selectedPage, pageContent)}
+                        className="mt-4 px-4 py-2 rounded-lg bg-[var(--accent-primary)] text-white"
+                    >
+                        Save Changes
+                    </motion.button>
                 </div>
             </div>
         );

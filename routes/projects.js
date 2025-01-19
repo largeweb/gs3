@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { streamWithXMLProcessing } from '../app/lib/agent-api.js';
 import { spawn } from 'child_process';
 import { codebaseTools, systemPrompt, userPrePrompt, userPostPrompt } from '../agents/codebase-analyzer.js';
+import { analyzeProjectWithPTGen } from '../workflows/project-analysis.js';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -176,51 +177,29 @@ router.post("/create", async (req, res) => {
 });
 
 router.post('/create-with-codebase', async (req, res) => {
-    console.log("🏗 Time to explore a codebase!");
+    console.log("🎭 Time to put on our coding detective hat! Elementary, my dear Watson...");
     const { title, codebasePath } = req.body;
 
     try {
-        // Set headers for streaming response
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-
-        console.log(`📂 Analyzing codebase at: ${codebasePath}`);
-
-        // Create project directory and logs file
         const settings = await readSettings();
         const projectsPath = settings.projectsPath || path.join(process.cwd(), "projects");
+        const templatePath = path.join(process.cwd(), "templates", "next-cloudflare");
         const newProjectPath = path.join(projectsPath, title);
 
-        console.log(`📁 Creating project directory: ${newProjectPath}`);
-        await fs.mkdir(newProjectPath, { recursive: true });
+        // First copy the template (same as prompt flow)
+        console.log("📋 Copying template files...");
+        await fs.cp(templatePath, newProjectPath, { recursive: true });
+        res.write(`data: ${JSON.stringify({ type: 'log', message: '📋 Template copied successfully' })}\n\n`);
 
-        // Get initial file listing
-        const { stdout, stderr } = await execAsync(`ls ${codebasePath}`);
-        const fileList = stdout.split('\n').filter(Boolean).join('\n');
+        // Now analyze the codebase and create tracker
+        console.log(`📂 Analyzing codebase at: ${codebasePath}`);
+        console.log("🔍 Elementary, my dear Watson! Let's deduce what this codebase is all about!");
+        await analyzeProjectWithPTGen(codebasePath, newProjectPath);
 
-        // Construct the initial prompt
-        const initialPrompt = `${systemPrompt}\n\n${userPrePrompt}\n\n${fileList}\n\n${userPostPrompt}`;
-
-        // Stream the analysis to the client
-        await streamWithXMLProcessing(
-            initialPrompt,
-            {
-                onTag: async (tag) => {
-                    res.write(`data: ${JSON.stringify({ type: 'log', message: tag })}\n\n`);
-                },
-                onError: (error) => {
-                    console.error("💥 Analysis error:", error);
-                    res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
-                }
-            }
-        );
-
-        // Send completion message
         res.write(`data: ${JSON.stringify({ type: 'complete', path: newProjectPath })}\n\n`);
         res.end();
     } catch (error) {
-        console.error("💥 Oops! Analysis failed:", error);
+        console.error("💥 Plot twist in our detective story:", error);
         res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
         res.end();
     }
